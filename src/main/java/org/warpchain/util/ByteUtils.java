@@ -20,15 +20,20 @@ public class ByteUtils {
 	}
 
 	public static String toHexString(byte[] bs) {
+		return toHexString(bs, 0, bs.length);
+	}
+
+	public static String toHexString(byte[] bs, int offset, int length) {
+		Objects.checkFromIndexSize(offset, bs.length, length);
 		if (bs.length == 0) {
 			return "";
 		}
 		if (bs.length == 1) {
-			return toHexString(bs[0]);
+			return toHexString(bs[offset]);
 		}
 		StringBuilder sb = new StringBuilder(bs.length * 2);
-		for (byte b : bs) {
-			sb.append(toHexString(b));
+		for (int i = offset; i < offset + length; i++) {
+			sb.append(toHexString(bs[i]));
 		}
 		return sb.toString();
 	}
