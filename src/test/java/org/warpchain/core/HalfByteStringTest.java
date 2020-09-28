@@ -31,6 +31,20 @@ class HalfByteStringTest {
 		var hbs = new HalfByteString(data16Bytes);
 		assertEquals(32, hbs.length());
 		assertEquals("1600010210203c7f80819eabb1def5ff", hbs.toString());
+
+		String hex = "1600010210203c7f80819eabb1def5ff";
+		var s2 = new HalfByteString(hex);
+		assertEquals(hex, s2.toString());
+	}
+
+	@Test
+	void testInvalidHexString() {
+		assertThrows(IllegalArgumentException.class, () -> {
+			new HalfByteString("123");
+		});
+		assertThrows(IllegalArgumentException.class, () -> {
+			new HalfByteString("123s");
+		});
 	}
 
 	@Test
@@ -48,6 +62,41 @@ class HalfByteStringTest {
 		assertEquals(0, empty.length());
 		assertEquals(0, empty.hashCode());
 		assertEquals("", empty.toString());
+	}
+
+	@Test
+	void testStartsWith() {
+		byte[] b1 = new byte[] { 0x12, 0x34, 0x56, 0x78 };
+		byte[] b2 = new byte[] { 0x12, 0x34, 0x56 };
+		byte[] b3 = new byte[] { 0x34, 0x56 };
+		var s1 = new HalfByteString(b1);
+		var s2 = new HalfByteString(b2);
+		var s3 = new HalfByteString(b3);
+		assertTrue(s1.startsWith(s2));
+		assertFalse(s1.startsWith(s3));
+		assertTrue(s1.startsWith(s3, 2));
+		// test same:
+		assertTrue(s2.startsWith(s1.substring(0, 6)));
+		assertTrue(s2.startsWith(s2));
+		// test empty:
+		var s0 = new HalfByteString(new byte[0]);
+		assertTrue(s2.startsWith(s0));
+		assertTrue(s0.startsWith(s0));
+	}
+
+	@Test
+	void testSharedPrefix() {
+		byte[] b1 = new byte[] { 0x12, 0x34, 0x56, 0x78 };
+		byte[] b2 = new byte[] { 0x12, 0x3f, 0x56 };
+		byte[] b3 = new byte[] { 0x34, 0x56 };
+		var s1 = new HalfByteString(b1);
+		var s2 = new HalfByteString(b2);
+		var s3 = new HalfByteString(b3);
+		assertEquals(s1.substring(0, 3), HalfByteString.sharedPrefix(s1, s2));
+		assertEquals(HalfByteString.EMPTY, HalfByteString.sharedPrefix(s1, s3));
+		assertEquals(HalfByteString.EMPTY, HalfByteString.sharedPrefix(s1, HalfByteString.EMPTY));
+		assertEquals(HalfByteString.EMPTY, HalfByteString.sharedPrefix(HalfByteString.EMPTY, HalfByteString.EMPTY));
+		assertEquals(s1, HalfByteString.sharedPrefix(s1, s1));
 	}
 
 	@Test
