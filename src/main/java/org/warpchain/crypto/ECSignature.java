@@ -24,7 +24,7 @@ public final class ECSignature {
 	 * @return Byte array as DER.
 	 */
 	public byte[] toDER() {
-		try (var output = new ByteArrayOutputStream()) {
+		try (var output = new ByteArrayOutputStream(80)) {
 			DERSequenceGenerator seq = new DERSequenceGenerator(output);
 			seq.addObject(new ASN1Integer(r));
 			seq.addObject(new ASN1Integer(s));
