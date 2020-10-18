@@ -1,7 +1,10 @@
 package org.warpchain.util;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+
+import org.bouncycastle.util.Arrays;
 
 public class ByteUtils {
 
@@ -71,6 +74,32 @@ public class ByteUtils {
 		}
 		if (bs2.length > 0) {
 			System.arraycopy(bs2, 0, buffer, bs1.length, bs2.length);
+		}
+		return buffer;
+	}
+
+	/**
+	 * Concat array { 'A', 'B', 'C' }, {'M', 'N'} and array { 'X', 'Y' } to new
+	 * array { 'A', 'B', 'C', 'M', 'N', 'X', 'Y' }.
+	 * 
+	 * @param bs1 the first byte array.
+	 * @param bs2 the second byte array.
+	 * @param bs3 the third byte array.
+	 * @return the new byte array.
+	 */
+	public static byte[] concat(byte[] bs1, byte[] bs2, byte[] bs3) {
+		Objects.requireNonNull(bs1, "byte array is null");
+		Objects.requireNonNull(bs2, "byte array is null");
+		Objects.requireNonNull(bs3, "byte array is null");
+		byte[] buffer = new byte[bs1.length + bs2.length + bs3.length];
+		if (bs1.length > 0) {
+			System.arraycopy(bs1, 0, buffer, 0, bs1.length);
+		}
+		if (bs2.length > 0) {
+			System.arraycopy(bs2, 0, buffer, bs1.length, bs2.length);
+		}
+		if (bs3.length > 0) {
+			System.arraycopy(bs3, 0, buffer, bs1.length + bs2.length, bs3.length);
 		}
 		return buffer;
 	}
@@ -155,6 +184,30 @@ public class ByteUtils {
 			results[i] = (byte) ((n1 << 4) + n2);
 		}
 		return results;
+	}
+
+	/**
+	 * Convert BigInteger to byte array as specific length.
+	 * 
+	 * @param bi     The BigInteger value.
+	 * @param length The expected byte array length.
+	 * @return byte array
+	 */
+	public static byte[] bigIntegerToBytes(BigInteger bi, int length) {
+		byte[] data = bi.toByteArray();
+		if (data.length == length) {
+			return data;
+		}
+		// remove leading zero:
+		if (data[0] == 0) {
+			data = Arrays.copyOfRange(data, 1, data.length);
+		}
+		if (data.length > length) {
+			throw new IllegalArgumentException("BigInteger is too large.");
+		}
+		byte[] copy = new byte[length];
+		System.arraycopy(data, 0, copy, length - data.length, data.length);
+		return copy;
 	}
 
 	private static final String HEX_CHARS = "0123456789abcdef";

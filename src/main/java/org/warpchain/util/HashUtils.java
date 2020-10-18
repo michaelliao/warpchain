@@ -3,6 +3,8 @@ package org.warpchain.util;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
+
 public class HashUtils {
 
 	public static byte[] sha256(byte[] input) {
@@ -23,6 +25,12 @@ public class HashUtils {
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static byte[] ripeMd160(byte[] input) {
+		MessageDigest digest = new RIPEMD160.Digest();
+		digest.update(input);
+		return digest.digest();
 	}
 
 }
