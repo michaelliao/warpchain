@@ -113,4 +113,28 @@ public class BitcoinUtilsTest {
 						"039ab753a8481d965af517e2c01db595b539398052404bc077ff798b8ddce49c94",
 						"1CWHy4hSWz4YDjqYKpDMTopRkxuWMy84mp"));
 	}
+
+	@MethodSource
+	static List<Arguments> bech32Addresses() {
+		// m/84'/0'/0'/0/0 ~ 5:
+		return List.of(
+				// bc1q3a9fejgzwyq3v2lr5avedpm7kw9ght30weazgd
+				Arguments.of("03b1ff66b2adf06a7931fb9d6409b97c66064256c5c0bd310754ce8dc554859fca",
+						"bc1q3a9fejgzwyq3v2lr5avedpm7kw9ght30weazgd"),
+				// bc1qdnm43xkcnvpyvldv5t69g34y3vrmcnm8rhrvps
+				Arguments.of("029e5b3eaba308af95fe3aecdfa8063e67466af1da71f4518245063fb6fd485606",
+						"bc1qdnm43xkcnvpyvldv5t69g34y3vrmcnm8rhrvps"),
+				// bc1q3lfvp6fa3wrmu5leljxpcfg2n7fx0wkgmg7lde
+				Arguments.of("037731685c5806c14c6146685d35b1c760def3dd5be6c40863a1b2c4afb02de15b",
+						"bc1q3lfvp6fa3wrmu5leljxpcfg2n7fx0wkgmg7lde"),
+				// bc1qenl0hklhhaxtrf4kkgsxexm6lh06xg54vjzd4v
+				Arguments.of("02591114689cb534e0b408b7d60707728a32959cb014bdff263060d163be5f3d3c",
+						"bc1qenl0hklhhaxtrf4kkgsxexm6lh06xg54vjzd4v"),
+				// bc1qfpxajv78msyss6j54w8ygqpp6ft675ptzarcxw
+				Arguments.of("02c442b0fbba5b39b13643080d78d7430601d8fbf93c83f9112ac13b6e63ed932b",
+						"bc1qfpxajv78msyss6j54w8ygqpp6ft675ptzarcxw"),
+				// bc1qf9qu8za8usmsa23rvjm65xx2l6nqpcafgcaddh
+				Arguments.of("02840cdaa98dbf271e98c31750636d3a55e72fe620e5f02fb5bb4a995fb16e6051",
+						"bc1qf9qu8za8usmsa23rvjm65xx2l6nqpcafgcaddh"));
+	}
 }
