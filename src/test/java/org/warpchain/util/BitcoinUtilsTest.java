@@ -75,6 +75,13 @@ public class BitcoinUtilsTest {
 		});
 	}
 
+	@MethodSource("bech32Addresses")
+	@ParameterizedTest
+	void toBech32Address(String hexPublicKey, String bc1address) {
+		BigInteger publicKey = new BigInteger(hexPublicKey, 16);
+		assertEquals(bc1address, BitcoinUtils.toBech32Address(publicKey));
+	}
+
 	/**
 	 * Mnemonic words: beach silent bind deputy hero glad boring rocket gain
 	 */

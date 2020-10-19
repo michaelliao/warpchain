@@ -66,6 +66,29 @@ public class BitcoinUtils {
 		return Base58Utils.encode(address);
 	}
 
+	public static String toBech32Address(ECKey key) {
+		return toBech32Address(key.getPublicKeyAsBytes());
+	}
+
+	public static String toBech32Address(BigInteger publicKey) {
+		if (publicKey == null || publicKey.signum() <= 0) {
+			throw new IllegalArgumentException("Invalid public key.");
+		}
+		return toBech32Address(ByteUtils.bigIntegerToBytes(publicKey, 33));
+	}
+
+	public static String toBech32Address(byte[] pubKey) {
+		if (pubKey == null || pubKey.length != 33 || (pubKey[0] != 0x02 && pubKey[0] != 0x03)) {
+			throw new IllegalArgumentException("Invalid public key.");
+		}
+		byte[] hash160 = HashUtils.ripeMd160(HashUtils.sha256(pubKey));
+		byte[] b32data = Bech32Utils.convertBits(hash160, 8, 5, false);
+		byte[] b32dataWithVersion = new byte[b32data.length + 1];
+		b32dataWithVersion[0] = 0;
+		System.arraycopy(b32data, 0, b32dataWithVersion, 1, b32data.length);
+		return Bech32Utils.encode("bc", b32dataWithVersion);
+	}
+
 	/**
 	 * Network ID: 0x00 = main network.
 	 */
