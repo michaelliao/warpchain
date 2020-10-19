@@ -6,7 +6,7 @@ import java.math.BigInteger;
 
 import org.junit.jupiter.api.Test;
 
-class Base58UtilsTest {
+public class Base58UtilsTest {
 
 	@Test
 	void testEncode() {

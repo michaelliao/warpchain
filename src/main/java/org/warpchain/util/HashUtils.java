@@ -3,6 +3,7 @@ package org.warpchain.util;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
 
 public class HashUtils {
@@ -33,4 +34,9 @@ public class HashUtils {
 		return digest.digest();
 	}
 
+	public static byte[] keccak256(byte[] input) {
+		Keccak.Digest256 digest = new Keccak.Digest256();
+		digest.update(input);
+		return digest.digest();
+	}
 }

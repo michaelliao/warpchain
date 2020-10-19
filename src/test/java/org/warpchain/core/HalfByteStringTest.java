@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class HalfByteStringTest {
+public class HalfByteStringTest {
 
 	byte[] data16Bytes;
 	byte[] data32Bytes;

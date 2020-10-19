@@ -7,7 +7,7 @@ import java.io.ByteArrayOutputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class ByteArrayOutputTest {
+public class ByteArrayOutputTest {
 
 	ByteArrayOutput output;
 

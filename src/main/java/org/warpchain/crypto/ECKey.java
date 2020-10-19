@@ -8,6 +8,8 @@ import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
+import org.bouncycastle.math.ec.ECCurve;
+import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.util.Arrays;
 import org.warpchain.util.ByteUtils;
 
@@ -79,7 +81,7 @@ public final class ECKey {
 			if (this.publicKey != null) {
 				this.publicKeyAsBytes = ByteUtils.bigIntegerToBytes(this.publicKey, 33);
 			} else {
-				this.publicKeyAsBytes = CURVE.getG().multiply(this.privateKey).getEncoded(true);
+				this.publicKeyAsBytes = CURVE_G.multiply(this.privateKey).getEncoded(true);
 			}
 		}
 		return Arrays.copyOf(this.publicKeyAsBytes, 33);
@@ -90,7 +92,7 @@ public final class ECKey {
 			if (this.publicKeyAsBytes != null) {
 				this.publicKey = new BigInteger(1, this.publicKeyAsBytes);
 			} else {
-				this.publicKeyAsBytes = CURVE.getG().multiply(this.privateKey).getEncoded(true);
+				this.publicKeyAsBytes = CURVE_PARAMS.getG().multiply(this.privateKey).getEncoded(true);
 				this.publicKey = new BigInteger(1, this.publicKeyAsBytes);
 			}
 		}
@@ -99,7 +101,7 @@ public final class ECKey {
 
 	public ECSignature sign(byte[] message) {
 		ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
-		ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKey, CURVE);
+		ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKey, CURVE_PARAMS);
 		signer.init(true, privKey);
 		BigInteger[] sigs = signer.generateSignature(message);
 		BigInteger r = sigs[0];
@@ -116,8 +118,8 @@ public final class ECKey {
 			throw new IllegalArgumentException("Signature s is not canonicalized.");
 		}
 		ECDSASigner signer = new ECDSASigner();
-		ECPublicKeyParameters params = new ECPublicKeyParameters(CURVE.getCurve().decodePoint(getPublicKeyAsBytes()),
-				CURVE);
+		ECPublicKeyParameters params = new ECPublicKeyParameters(CURVE.decodePoint(getPublicKeyAsBytes()),
+				CURVE_PARAMS);
 		signer.init(false, params);
 		return signer.verifySignature(message, r, s);
 	}
@@ -128,7 +130,9 @@ public final class ECKey {
 
 	// static fields //////////////////////////////////////////////////////////
 
-	private static final ECDomainParameters CURVE;
+	private static final ECDomainParameters CURVE_PARAMS;
+	private static final ECCurve CURVE;
+	private static final ECPoint CURVE_G;
 	private static final BigInteger CURVE_N;
 	private static final BigInteger CURVE_HALF_N;
 	private static final SecureRandom SECURE_RANDOM;
@@ -136,7 +140,9 @@ public final class ECKey {
 
 	static {
 		X9ECParameters params = SECNamedCurves.getByName("secp256k1");
-		CURVE = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
+		CURVE = params.getCurve();
+		CURVE_PARAMS = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
+		CURVE_G = params.getG();
 		CURVE_N = params.getN();
 		CURVE_HALF_N = params.getN().shiftRight(1);
 		SecureRandom secureRandom = null;
@@ -150,5 +156,9 @@ public final class ECKey {
 
 	public static BigInteger getN() {
 		return CURVE_N;
+	}
+
+	public static ECCurve getCurve() {
+		return CURVE;
 	}
 }
