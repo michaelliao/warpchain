@@ -8,6 +8,15 @@ import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
 
 public class HashUtils {
 
+	public static byte[] sha1(byte[] input) {
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-1");
+			return md.digest(input);
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public static byte[] sha256(byte[] input) {
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-256");

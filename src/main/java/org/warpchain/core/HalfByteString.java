@@ -86,6 +86,7 @@ public final class HalfByteString {
 		if (beginIndex == 0 && endIndex == this.count) {
 			return this;
 		}
+		Objects.checkFromToIndex(beginIndex, endIndex, this.count);
 		return new HalfByteString(this.value, this.offset + beginIndex, endIndex - beginIndex);
 	}
 

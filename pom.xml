@@ -3,6 +3,12 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.2.6.RELEASE</version>
+	</parent>
+
 	<groupId>org.warpchain</groupId>
 	<artifactId>main</artifactId>
 	<version>1.0.0</version>
@@ -48,29 +54,28 @@
 		<!-- artifact version -->
 		<bouncycastle.version>1.66</bouncycastle.version>
 		<c3p0.version>0.9.1.2</c3p0.version>
-		<commons.logging.version>1.1</commons.logging.version>
 		<hsqldb.version>2.3.3</hsqldb.version>
 		<javax.annotation.version>1.2</javax.annotation.version>
 		<junit.version>5.6.2</junit.version>
 		<rocksdbjni.version>6.11.4</rocksdbjni.version>
-		<spring.version>5.1.9.RELEASE</spring.version>
 	</properties>
 
 	<dependencies>
 		<dependency>
-			<groupId>commons-logging</groupId>
-			<artifactId>commons-logging-api</artifactId>
-			<version>${commons.logging.version}</version>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
-			<version>${spring.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-jdbc</artifactId>
-			<version>${spring.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.rocksdb</groupId>
@@ -98,19 +103,16 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
-			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-params</artifactId>
-			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
