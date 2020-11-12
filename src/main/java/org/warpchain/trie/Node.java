@@ -10,6 +10,8 @@ public class Node {
 
 	final NodeType type;
 
+	Node left; // when type == FULL
+	Node right; // when type == FULL
 	Node[] children; // when type==FULL
 	HalfByteString key; // when type==LEAF or SHORT
 	Node next; // when type=SHORT
