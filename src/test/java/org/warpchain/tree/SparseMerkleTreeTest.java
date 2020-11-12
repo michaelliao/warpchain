@@ -2,23 +2,21 @@ package org.warpchain.tree;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Arrays;
+
 import org.junit.jupiter.api.Test;
+import org.warpchain.util.HashUtils;
 
 public class SparseMerkleTreeTest {
 
 	@Test
 	void emptyTree() {
-		var smt = new SparseMerkleTree(SparseMerkleTreeTest::hash8, 8);
+		var smt = new SparseMerkleTree(SparseMerkleTreeTest::hash8);
+		smt.print();
 	}
 
 	static byte[] hash8(byte[] input) {
-		if (input == null || input.length == 0) {
-			return new byte[] { 0 };
-		}
-		byte result = 0;
-		for (byte b : input) {
-			result = (byte) (result * 31 + b);
-		}
-		return new byte[] { result };
+		byte[] hash = HashUtils.dsha256(input);
+		return Arrays.copyOfRange(hash, 0, 8);
 	}
 }
