@@ -11,7 +11,21 @@ import java.util.Objects;
 public class BitString {
 
 	private static final byte[] EMPTY_BITS = new byte[0];
+
+	/**
+	 * Empty bit string ''.
+	 */
 	public static final BitString EMPTY = new BitString(EMPTY_BITS, 0, 0);
+
+	/**
+	 * Single bit string of '0'.
+	 */
+	public static final BitString BIT_0 = new BitString(new byte[] { 0x0 }, 0, 1);
+
+	/**
+	 * Single bit string of '1'.
+	 */
+	public static final BitString BIT_1 = new BitString(new byte[] { (byte) 0x80 }, 0, 1);
 
 	private final byte[] value;
 	private final int offset;
