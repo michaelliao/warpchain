@@ -7,4 +7,6 @@ public interface TreeInfo {
 	byte[] generateMerkleHash(byte[] left, byte[] right);
 
 	byte[] getDefaultHashAtHeight(int height);
+
+	byte[] hash(byte[] data);
 }

@@ -1,15 +1,15 @@
 package org.warpchain.tree;
 
-import org.warpchain.core.BitString;
+import org.warpchain.core.HalfByteString;
 
 public abstract class Node {
-	
-	protected static final String INDENT = "  ";
 
-	public abstract void appendTo(StringBuilder sb);
+	public abstract void appendTo(StringBuilder sb, int slot);
 
 	public abstract byte[] getMerkleHash();
 
-	public abstract void update(TreeInfo tree, BitString path, byte[] dataHash, byte[] dataValue);
+	public abstract Node update(TreeInfo tree, HalfByteString path, byte[] dataHash, byte[] dataValue);
+
+	protected static final String INDENT = " ";
 
 }

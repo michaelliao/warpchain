@@ -2,7 +2,7 @@ package org.warpchain.tree;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.warpchain.core.BitString;
+import org.warpchain.core.HalfByteString;
 import org.warpchain.util.ByteUtils;
 
 public class FullNode extends Node {
@@ -12,12 +12,7 @@ public class FullNode extends Node {
 	/**
 	 * Path from root to current node.
 	 */
-	private BitString path;
-
-	/**
-	 * Bit value of current node: 0=left, 1=right.
-	 */
-	private int bit;
+	private HalfByteString path;
 
 	/**
 	 * Height of this node.
@@ -28,31 +23,21 @@ public class FullNode extends Node {
 	 * Merkle hash of this node.
 	 */
 	private byte[] merkleHash;
-	
+
 	/**
 	 * 16 nodes represents 4-depth sub-tree
 	 */
 	private Node[] children;
 
-	/**
-	 * Left child node.
-	 */
-	private Node left;
+	FullNode(TreeInfo tree, int height, HalfByteString path) {
+		assert height >= 0 && height < tree.getTreeHeight() && (height & 0x3) == 0
+				: "invalid height for full node: " + height;
+		assert path.length() <= (height << 2) : "invalid path length for full node: " + path;
 
-	/**
-	 * Right child node.
-	 */
-	private Node right;
-
-	FullNode(TreeInfo tree, int height, BitString path) {
-		assert tree.getTreeHeight() > height + 1
-				: "cannot set full node to height " + height + " when tree height is " + tree.getTreeHeight();
-		this.path = path;
-		this.bit = path.bitValueAt(height);
 		this.height = height;
+		this.path = path;
 		this.merkleHash = tree.getDefaultHashAtHeight(height);
-		this.left = null;
-		this.right = null;
+		this.children = null;
 	}
 
 	@Override
@@ -61,71 +46,201 @@ public class FullNode extends Node {
 	}
 
 	@Override
-	public void update(TreeInfo tree, BitString path, byte[] dataHash, byte[] dataValue) {
-		int dataBit = path.bitValueAt(this.height + 1);
-		if (dataBit == 0) {
-			if (this.left == null) {
-				// no left node, create new node:
-				if (this.height == tree.getTreeHeight() - 2) {
-					// create leaf node:
-					this.left = new LeafNode(tree, this.height + 1, path, dataHash, dataValue);
-					this.merkleHash = generateMerkleHash(tree);
-					logger.info("insert left child of {}: new short cut node: {}", this, this.left);
-				} else {
-					// create short-cut node to data:
-					this.left = new ShortCutNode(tree, this.height + 1, path, dataHash, dataValue);
-					this.merkleHash = generateMerkleHash(tree);
-					logger.info("insert left child of {}: new short cut node: {}", this, this.left);
-				}
-			} else {
-				// left node exist:
-				logger.info("update left child of {}", this);
-			}
-		} else { // dataBit == 1
-			if (this.right == null) {
-				// no right node, create new node:
-				if (this.height == tree.getTreeHeight() - 2) {
-					// create leaf node:
-					this.right = new LeafNode(tree, this.height + 1, path, dataHash, dataValue);
-					this.merkleHash = generateMerkleHash(tree);
-					logger.info("insert right child of {}: new short cut node: {}", this, this.right);
-				} else {
-					// create short-cut node to data:
-					this.right = new ShortCutNode(tree, this.height + 1, path, dataHash, dataValue);
-					this.merkleHash = generateMerkleHash(tree);
-					logger.info("insert right child of {}: new short cut node: {}", this, this.right);
-				}
-			} else {
-				// right node exist:
-				logger.info("update right child of {}", this);
-			}
+	public Node update(TreeInfo tree, HalfByteString path, byte[] dataHash, byte[] dataValue) {
+		int childHeight = this.height + 4;
+		int childHalfByteIndex = childHeight >> 2;
+		int childSlotIndex = path.valueAt(childHalfByteIndex - 1);
+		Node child = this.getChild(childSlotIndex);
+		if (child == null) {
+			// no child node, create leaf node:
+			Node created = new LeafNode(tree, childHeight, path, dataHash, dataValue);
+			logger.info("set new node at slot {}: {}", childSlotIndex, created);
+			this.setChild(childSlotIndex, created);
+			this.updateMerkleHash(tree);
+			logger.info("update merkle to {}: {}", ByteUtils.toHexString(this.merkleHash), this);
+		} else {
+			// child node exist, update:
+			Node updated = child.update(tree, path, dataHash, dataValue);
+			logger.info("set updated node at slot {}: {}", childSlotIndex, updated);
+			this.setChild(childSlotIndex, updated);
+			this.updateMerkleHash(tree);
+			logger.info("update merkle to {}: {}", ByteUtils.toHexString(this.merkleHash), this);
 		}
+		return this;
 	}
 
-	private byte[] generateMerkleHash(TreeInfo tree) {
-		byte[] leftChildHash = left == null ? tree.getDefaultHashAtHeight(this.height + 1) : left.getMerkleHash();
-		byte[] rightChildHash = right == null ? tree.getDefaultHashAtHeight(this.height + 1) : right.getMerkleHash();
-		return tree.generateMerkleHash(leftChildHash, rightChildHash);
+	Node getChild(int index) {
+		if (this.children == null) {
+			return null;
+		}
+		return this.children[index];
+	}
+
+	void setChild(int index, Node child) {
+		if (this.children == null) {
+			this.children = new Node[16];
+		}
+		this.children[index] = child;
+	}
+
+	void updateMerkleHash(TreeInfo tree) {
+		int subtreeHeight = this.path.length() * 4;
+		if (this.children == null) {
+			this.merkleHash = tree.getDefaultHashAtHeight(subtreeHeight);
+		}
+
+		// init 16 hashes, set null if default:
+		byte[][] merkles16 = new byte[16][];
+		for (int i = 0; i < 16; i++) {
+			Node node = this.children[i];
+			merkles16[i] = node == null ? null : node.getMerkleHash();
+			if (merkles16[i] != null) {
+				logger.info("16 nodes: {} merkle = {}", i, ByteUtils.toHexString(merkles16[i]));
+			}
+		}
+
+		// 16 hashes -> 8 hashes:
+		int merkleHeight = subtreeHeight + 4;
+		byte[][] merkles8 = new byte[8][];
+		for (int i = 0; i < 8; i++) {
+			int n = i << 1;
+			byte[] left = merkles16[n];
+			byte[] right = merkles16[n + 1];
+			if (left == null && right == null) {
+				merkles8[i] = null;
+			} else {
+				if (left == null) {
+					left = tree.getDefaultHashAtHeight(merkleHeight);
+				}
+				if (right == null) {
+					right = tree.getDefaultHashAtHeight(merkleHeight);
+				}
+				merkles8[i] = tree.generateMerkleHash(left, right);
+				logger.info("8 nodes: {} merkle = {}", i, ByteUtils.toHexString(merkles8[i]));
+			}
+		}
+
+		// 8 hashes -> 4 hashes:
+		merkleHeight--;
+		byte[][] merkles4 = new byte[4][];
+		for (int i = 0; i < 4; i++) {
+			int n = i << 1;
+			byte[] left = merkles8[n];
+			byte[] right = merkles8[n + 1];
+			if (left == null && right == null) {
+				merkles4[i] = null;
+			} else {
+				if (left == null) {
+					left = tree.getDefaultHashAtHeight(merkleHeight);
+				}
+				if (right == null) {
+					right = tree.getDefaultHashAtHeight(merkleHeight);
+				}
+				merkles4[i] = tree.generateMerkleHash(left, right);
+				logger.info("4 nodes: {} merkle = {}", i, ByteUtils.toHexString(merkles4[i]));
+			}
+		}
+
+		// 4 hashes -> 2 hashes:
+		merkleHeight--;
+		byte[][] merkles2 = new byte[2][];
+		for (int i = 0; i < 2; i++) {
+			int n = i << 1;
+			byte[] left = merkles4[n];
+			byte[] right = merkles4[n + 1];
+			if (left == null && right == null) {
+				merkles2[i] = null;
+			} else {
+				if (left == null) {
+					left = tree.getDefaultHashAtHeight(merkleHeight);
+				}
+				if (right == null) {
+					right = tree.getDefaultHashAtHeight(merkleHeight);
+				}
+				merkles2[i] = tree.generateMerkleHash(left, right);
+				logger.info("2 nodes: {} merkle = {}", i, ByteUtils.toHexString(merkles2[i]));
+			}
+		}
+
+		// 2 hashes -> 1 hash:
+		merkleHeight--;
+		byte[] merkle = null;
+		byte[] left = merkles2[0];
+		byte[] right = merkles2[1];
+		if (left != null || right != null) {
+			if (left == null) {
+				left = tree.getDefaultHashAtHeight(merkleHeight);
+			}
+			if (right == null) {
+				right = tree.getDefaultHashAtHeight(merkleHeight);
+			}
+			merkle = tree.generateMerkleHash(left, right);
+		}
+
+		// root hash of subtree:
+		merkleHeight--;
+		if (merkle == null) {
+			merkle = tree.getDefaultHashAtHeight(merkleHeight);
+		}
+		logger.info("subtree height={}, merkle={}", subtreeHeight, ByteUtils.toHexString(merkle));
+
+		// continue shared path:
+		if (subtreeHeight > this.height) {
+			int startIndex = this.height / 4;
+			int endIndex = this.path.length() - 1;
+			for (int i = endIndex; i >= startIndex; i--) {
+				int hb = this.path.valueAt(i);
+				int bitIndex = i << 2;
+				int bit0 = hb & 0b1000;
+				int bit1 = hb & 0b0100;
+				int bit2 = hb & 0b0010;
+				int bit3 = hb & 0b0001;
+				left = bit3 == 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 4);
+				right = bit3 != 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 4);
+				merkle = tree.generateMerkleHash(left, right);
+				logger.info("height={}, merkle={}", bitIndex + 3, ByteUtils.toHexString(merkle));
+
+				left = bit2 == 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 3);
+				right = bit2 != 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 3);
+				merkle = tree.generateMerkleHash(left, right);
+
+				left = bit1 == 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 2);
+				right = bit1 != 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 2);
+				merkle = tree.generateMerkleHash(left, right);
+
+				left = bit0 == 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 1);
+				right = bit0 != 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 1);
+				merkle = tree.generateMerkleHash(left, right);
+				logger.info("height = {}, merkle = {}", i * 4, ByteUtils.toHexString(merkle));
+			}
+		}
+
+		this.merkleHash = merkle;
 	}
 
 	@Override
-	public void appendTo(StringBuilder sb) {
-		for (int i = 0; i <= this.height; i++) {
+	public void appendTo(StringBuilder sb, int slot) {
+		for (int i = 0; i < this.height; i++) {
 			sb.append(INDENT);
 		}
-		sb.append(this.bit == 0 ? 'L' : 'R').append("=[FULL: height=").append(this.height).append(", path=")
-				.append(this.path).append(", merkleHash=").append(ByteUtils.toHexString(this.merkleHash)).append("]\n");
-		if (this.left != null) {
-			this.left.appendTo(sb);
+		if (slot >= 0) {
+			sb.append(String.format("%x", slot)).append(':');
 		}
-		if (this.right != null) {
-			this.right.appendTo(sb);
+		sb.append("[FULL: height=").append(this.height).append(", path=").append(this.path).append(", merkleHash=")
+				.append(ByteUtils.toHexString(this.merkleHash)).append("]\n");
+		if (this.children != null) {
+			for (int i = 0; i < 16; i++) {
+				Node child = this.children[i];
+				if (child != null) {
+					child.appendTo(sb, i);
+				}
+			}
 		}
 	}
 
 	@Override
 	public String toString() {
-		return String.format("FullNode(height=%s, bit=%s, path=%s, merkleHash=%s)", this.height, this.bit, this.path,
+		return String.format("FullNode(height=%s, path=%s, merkleHash=%s)", this.height, this.path,
 				ByteUtils.toHexString(this.merkleHash));
 	}
 }
