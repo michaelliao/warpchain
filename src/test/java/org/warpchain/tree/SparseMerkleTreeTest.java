@@ -3,9 +3,12 @@ package org.warpchain.tree;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 import org.warpchain.util.ByteUtils;
@@ -151,6 +154,68 @@ public class SparseMerkleTreeTest {
 		FullNode root = (FullNode) tree.getRootNode();
 		assertNotNull(root.getChild(9));
 		assertEquals(verifyMerkle(tree, "hello", "abc-2120105", "hi-5515"), tree.getRootMerkleHashAsString());
+	}
+
+	@Test
+	void insertLeafsWithSharedPath3() {
+		var tree = new SparseMerkleTree(SparseMerkleTreeTest::hash24bits);
+		// H("hello") = 9595c 9
+		tree.update("hello".getBytes());
+		tree.print();
+		// H("abc-2120105") = 9595c 5
+		tree.update("abc-2120105".getBytes());
+		tree.print();
+		// H("hi-5515") = 959 df6
+		tree.update("hi-5515".getBytes());
+		// H("op-416") = 95 ac9f
+		tree.update("op-416".getBytes());
+		tree.print();
+		FullNode root = (FullNode) tree.getRootNode();
+		assertNotNull(root.getChild(9));
+		assertEquals(verifyMerkle(tree, "hello", "abc-2120105", "hi-5515", "op-416"), tree.getRootMerkleHashAsString());
+	}
+
+	@Test
+	void insertLeafsWithDiffOrders() {
+		String[] data = { "hello", "abc-2120105", "hi-5515", "op-416", "t-60" };
+		var tree = new SparseMerkleTree(SparseMerkleTreeTest::hash24bits);
+		String merkle = verifyMerkle(tree, data);
+
+		var tree1 = new SparseMerkleTree(SparseMerkleTreeTest::hash24bits);
+		Arrays.stream(data).map(String::getBytes).forEach(tree1::update);
+		tree1.print();
+		assertEquals(merkle, tree1.getRootMerkleHashAsString());
+
+		var tree2 = new SparseMerkleTree(SparseMerkleTreeTest::hash24bits);
+		Arrays.stream(data).sorted().map(String::getBytes).forEach(tree2::update);
+		tree2.print();
+		assertEquals(merkle, tree2.getRootMerkleHashAsString());
+
+		var tree3 = new SparseMerkleTree(SparseMerkleTreeTest::hash24bits);
+		Arrays.stream(data).sorted((s1, s2) -> Integer.compare(s1.length(), s2.length())).map(String::getBytes)
+				.forEach(tree3::update);
+		tree3.print();
+		assertEquals(merkle, tree3.getRootMerkleHashAsString());
+	}
+
+	@Test
+	void updateRandom() {
+		Random rnd = new Random(123456);
+		List<String> list = new ArrayList<>();
+		for (int i = 0; i < 60; i++) {
+			StringBuilder sb = new StringBuilder(8);
+			for (int j = 0; j < 8; j++) {
+				int ch = 'A' + rnd.nextInt(26);
+				sb.append((char) ch);
+			}
+			list.add(sb.toString());
+		}
+		String[] data = list.toArray(String[]::new);
+		var tree = new SparseMerkleTree(SparseMerkleTreeTest::hash24bits);
+		Arrays.stream(data).map(String::getBytes).forEach(tree::update);
+		String merkle = verifyMerkle(tree, data);
+		assertEquals(merkle, tree.getRootMerkleHashAsString());
+		tree.print();
 	}
 
 	@Test
