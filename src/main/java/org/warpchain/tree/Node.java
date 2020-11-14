@@ -8,7 +8,7 @@ public abstract class Node {
 
 	public abstract byte[] getMerkleHash();
 
-	public abstract Node update(TreeInfo tree, HalfByteString path, byte[] dataHash, byte[] dataValue);
+	public abstract Node update(TreeInfo tree, HalfByteString dataPath, byte[] dataHash, byte[] dataValue);
 
 	protected static final String INDENT = " ";
 

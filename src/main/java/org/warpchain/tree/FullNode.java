@@ -12,12 +12,12 @@ public class FullNode extends Node {
 	/**
 	 * Path from root to current node.
 	 */
-	private HalfByteString path;
+	private final HalfByteString path;
 
 	/**
 	 * Height of this node.
 	 */
-	private int height;
+	private final int height;
 
 	/**
 	 * Merkle hash of this node.
@@ -46,30 +46,61 @@ public class FullNode extends Node {
 	}
 
 	@Override
-	public Node update(TreeInfo tree, HalfByteString path, byte[] dataHash, byte[] dataValue) {
-		int childHeight = this.height + 4;
-		int childHalfByteIndex = childHeight >> 2;
-		int childSlotIndex = path.valueAt(childHalfByteIndex - 1);
-		Node child = this.getChild(childSlotIndex);
-		if (child == null) {
-			// no child node, create leaf node:
-			Node created = new LeafNode(tree, childHeight, path, dataHash, dataValue);
-			logger.info("set new node at slot {}: {}", childSlotIndex, created);
-			this.setChild(childSlotIndex, created);
-			this.updateMerkleHash(tree);
-			logger.info("update merkle to {}: {}", ByteUtils.toHexString(this.merkleHash), this);
-		} else {
-			// child node exist, update:
-			Node updated = child.update(tree, path, dataHash, dataValue);
-			logger.info("set updated node at slot {}: {}", childSlotIndex, updated);
-			this.setChild(childSlotIndex, updated);
-			this.updateMerkleHash(tree);
-			logger.info("update merkle to {}: {}", ByteUtils.toHexString(this.merkleHash), this);
+	public Node update(TreeInfo tree, HalfByteString dataPath, byte[] dataHash, byte[] dataValue) {
+		HalfByteString prefix = HalfByteString.sharedPrefix(this.path, dataPath);
+		logger.info("shared path prefix: {}", prefix);
+		if (prefix.length() == this.path.length()) {
+			logger.info("updated data path has same prefix for current path, just update child node.");
+			int childHeight = this.path.length() * 4 + 4;
+			int childHalfByteIndex = childHeight >> 2;
+			int childSlotIndex = dataPath.valueAt(childHalfByteIndex - 1);
+			Node child = this.getChild(childSlotIndex);
+			if (child == null) {
+				// no child node, create leaf node:
+				Node created = new LeafNode(tree, childHeight, dataPath, dataHash, dataValue);
+				logger.info("set new node at slot {}: {}", childSlotIndex, created);
+				this.setChild(childSlotIndex, created);
+				this.updateMerkleHash(tree);
+				logger.info("update merkle to {}: {}", ByteUtils.toHexString(this.merkleHash), this);
+			} else {
+				// child node exist, update:
+				Node updated = child.update(tree, dataPath, dataHash, dataValue);
+				logger.info("set updated node at slot {}: {}", childSlotIndex, updated);
+				this.setChild(childSlotIndex, updated);
+				this.updateMerkleHash(tree);
+				logger.info("update merkle to {}: {}", ByteUtils.toHexString(this.merkleHash), this);
+			}
+			return this;
 		}
-		return this;
+		FullNode parent = new FullNode(tree, this.height, prefix);
+		logger.info("cannot update child node direct. split new parent node for path {}: {}", prefix, parent);
+		FullNode currentChild = new FullNode(tree, prefix.length() * 4 + 4, this.path);
+		logger.info("copy and modify current node to new full node: {}", currentChild);
+		copyChildren(this, currentChild);
+		currentChild.updateMerkleHash(tree);
+		int currentChildSlotIndex = this.path.valueAt(prefix.length());
+		parent.setChild(currentChildSlotIndex, currentChild);
+
+		// create new child LeafNode:
+		LeafNode leaf = new LeafNode(tree, prefix.length() * 4 + 4, dataPath, dataHash, dataValue);
+		logger.info("add new leaf node: {}", leaf);
+		int newLeafSlotIndex = dataPath.valueAt(prefix.length());
+		parent.setChild(newLeafSlotIndex, leaf);
+		parent.updateMerkleHash(tree);
+		return parent;
+	}
+
+	private void copyChildren(FullNode fromNode, FullNode toNode) {
+		if (fromNode.children == null) {
+			toNode.children = null;
+		} else {
+			toNode.children = new Node[16];
+			System.arraycopy(fromNode.children, 0, toNode.children, 0, 16);
+		}
 	}
 
 	Node getChild(int index) {
+		assert index >= 0 && index < 16 : "Invalid child index: " + index;
 		if (this.children == null) {
 			return null;
 		}
@@ -77,6 +108,7 @@ public class FullNode extends Node {
 	}
 
 	void setChild(int index, Node child) {
+		assert index >= 0 && index < 16 : "Invalid child index: " + index;
 		if (this.children == null) {
 			this.children = new Node[16];
 		}
@@ -95,7 +127,7 @@ public class FullNode extends Node {
 			Node node = this.children[i];
 			merkles16[i] = node == null ? null : node.getMerkleHash();
 			if (merkles16[i] != null) {
-				logger.info("16 nodes: {} merkle = {}", i, ByteUtils.toHexString(merkles16[i]));
+				logger.info("for subtree: 16 nodes: {} merkle = {}", i, ByteUtils.toHexString(merkles16[i]));
 			}
 		}
 
@@ -116,7 +148,7 @@ public class FullNode extends Node {
 					right = tree.getDefaultHashAtHeight(merkleHeight);
 				}
 				merkles8[i] = tree.generateMerkleHash(left, right);
-				logger.info("8 nodes: {} merkle = {}", i, ByteUtils.toHexString(merkles8[i]));
+				logger.info("for subtree: 8 nodes: {} merkle = {}", i, ByteUtils.toHexString(merkles8[i]));
 			}
 		}
 
@@ -137,7 +169,7 @@ public class FullNode extends Node {
 					right = tree.getDefaultHashAtHeight(merkleHeight);
 				}
 				merkles4[i] = tree.generateMerkleHash(left, right);
-				logger.info("4 nodes: {} merkle = {}", i, ByteUtils.toHexString(merkles4[i]));
+				logger.info("for subtree: 4 nodes: {} merkle = {}", i, ByteUtils.toHexString(merkles4[i]));
 			}
 		}
 
@@ -158,7 +190,7 @@ public class FullNode extends Node {
 					right = tree.getDefaultHashAtHeight(merkleHeight);
 				}
 				merkles2[i] = tree.generateMerkleHash(left, right);
-				logger.info("2 nodes: {} merkle = {}", i, ByteUtils.toHexString(merkles2[i]));
+				logger.info("for subtree: 2 nodes: {} merkle = {}", i, ByteUtils.toHexString(merkles2[i]));
 			}
 		}
 
@@ -182,9 +214,9 @@ public class FullNode extends Node {
 		if (merkle == null) {
 			merkle = tree.getDefaultHashAtHeight(merkleHeight);
 		}
-		logger.info("subtree height={}, merkle={}", subtreeHeight, ByteUtils.toHexString(merkle));
+		logger.info("for subtree: root: height = {}, merkle = {}", subtreeHeight, ByteUtils.toHexString(merkle));
 
-		// continue shared path:
+		// continue calculate merkle for shared path:
 		if (subtreeHeight > this.height) {
 			int startIndex = this.height / 4;
 			int endIndex = this.path.length() - 1;
@@ -198,7 +230,7 @@ public class FullNode extends Node {
 				left = bit3 == 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 4);
 				right = bit3 != 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 4);
 				merkle = tree.generateMerkleHash(left, right);
-				logger.info("height={}, merkle={}", bitIndex + 3, ByteUtils.toHexString(merkle));
+				logger.info("for shared path: height = {}, merkle = {}", bitIndex + 3, ByteUtils.toHexString(merkle));
 
 				left = bit2 == 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 3);
 				right = bit2 != 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 3);
@@ -211,7 +243,7 @@ public class FullNode extends Node {
 				left = bit0 == 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 1);
 				right = bit0 != 0 ? merkle : tree.getDefaultHashAtHeight(bitIndex + 1);
 				merkle = tree.generateMerkleHash(left, right);
-				logger.info("height = {}, merkle = {}", i * 4, ByteUtils.toHexString(merkle));
+				logger.info("for shared path: height = {}, merkle = {}", bitIndex, ByteUtils.toHexString(merkle));
 			}
 		}
 

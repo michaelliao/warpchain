@@ -14,12 +14,12 @@ public class LeafNode extends Node {
 	/**
 	 * Full path from root to leaf node.
 	 */
-	private HalfByteString path;
+	private final HalfByteString path;
 
 	/**
 	 * start height of this node.
 	 */
-	private int height;
+	private final int height;
 
 	/**
 	 * Merkle hash of this node.
@@ -107,11 +107,10 @@ public class LeafNode extends Node {
 		final int childHeight = (prefix.length() + 1) * 4;
 		final FullNode parent = new FullNode(tree, parentHeight, prefix);
 		logger.info("build full node for current node and new node: {}", parent);
+		// new leaf from current node:
 		final int currentSlot = this.path.valueAt(childHeight / 4 - 1);
-		// move leaf height to next level:
-		this.height = childHeight;
-		this.updateMerkleHash(tree);
-		parent.setChild(currentSlot, this);
+		parent.setChild(currentSlot, new LeafNode(tree, childHeight, this.path, this.dataHash, this.dataValue));
+		// new leaf node:
 		final int newSlot = dataPath.valueAt(childHeight / 4 - 1);
 		parent.setChild(newSlot, new LeafNode(tree, childHeight, dataPath, dataHash, dataValue));
 		parent.updateMerkleHash(tree);

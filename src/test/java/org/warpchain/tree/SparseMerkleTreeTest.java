@@ -36,10 +36,10 @@ public class SparseMerkleTreeTest {
 	@Test
 	void insertRootSlot9() {
 		var tree = new SparseMerkleTree(SparseMerkleTreeTest::hash24bits);
-		// H("hello") =
+		// H("hello") = 9595c9
 		tree.update("hello".getBytes());
 		tree.print();
-		FullNode root = tree.getRootNode();
+		FullNode root = (FullNode) tree.getRootNode();
 		assertNotNull(root.getChild(9));
 		assertEquals(verifyMerkle(tree, "hello"), tree.getRootMerkleHashAsString());
 	}
@@ -53,8 +53,13 @@ public class SparseMerkleTreeTest {
 		// H("t-60") = 9 a7948
 		tree.update("t-60".getBytes());
 		tree.print();
-		FullNode root = tree.getRootNode();
-		assertNotNull(root.getChild(9));
+		FullNode root = (FullNode) tree.getRootNode();
+		Node sub = root.getChild(9);
+		assertNotNull(sub);
+		assertTrue(sub instanceof FullNode);
+		FullNode fn = (FullNode) sub;
+		assertNotNull(fn.getChild(5));
+		assertNotNull(fn.getChild(0xa));
 		assertEquals(verifyMerkle(tree, "hello", "t-60"), tree.getRootMerkleHashAsString());
 	}
 
@@ -67,7 +72,7 @@ public class SparseMerkleTreeTest {
 		// H("op-416") = 95 ac9f
 		tree.update("op-416".getBytes());
 		tree.print();
-		FullNode root = tree.getRootNode();
+		FullNode root = (FullNode) tree.getRootNode();
 		assertNotNull(root.getChild(9));
 		assertEquals(verifyMerkle(tree, "hello", "op-416"), tree.getRootMerkleHashAsString());
 	}
@@ -81,7 +86,7 @@ public class SparseMerkleTreeTest {
 		// H("hi-5515") = 959 df6
 		tree.update("hi-5515".getBytes());
 		tree.print();
-		FullNode root = tree.getRootNode();
+		FullNode root = (FullNode) tree.getRootNode();
 		assertNotNull(root.getChild(9));
 		assertEquals(verifyMerkle(tree, "hello", "hi-5515"), tree.getRootMerkleHashAsString());
 	}
@@ -95,7 +100,7 @@ public class SparseMerkleTreeTest {
 		// H("xyz-50318") = 9595 8a
 		tree.update("xyz-50318".getBytes());
 		tree.print();
-		FullNode root = tree.getRootNode();
+		FullNode root = (FullNode) tree.getRootNode();
 		assertNotNull(root.getChild(9));
 		assertEquals(verifyMerkle(tree, "hello", "xyz-50318"), tree.getRootMerkleHashAsString());
 	}
@@ -109,9 +114,43 @@ public class SparseMerkleTreeTest {
 		// H("abc-2120105") = 9595c 5
 		tree.update("abc-2120105".getBytes());
 		tree.print();
-		FullNode root = tree.getRootNode();
+		FullNode root = (FullNode) tree.getRootNode();
 		assertNotNull(root.getChild(9));
 		assertEquals(verifyMerkle(tree, "hello", "abc-2120105"), tree.getRootMerkleHashAsString());
+	}
+
+	@Test
+	void insertLeafsWithSharedPath() {
+		var tree = new SparseMerkleTree(SparseMerkleTreeTest::hash24bits);
+		// H("hello") = 9595c 9
+		tree.update("hello".getBytes());
+		tree.print();
+		// H("abc-2120105") = 9595c 5
+		tree.update("abc-2120105".getBytes());
+		tree.print();
+		// H("xyz-50318") = 9595 8a
+		tree.update("xyz-50318".getBytes());
+		tree.print();
+		FullNode root = (FullNode) tree.getRootNode();
+		assertNotNull(root.getChild(9));
+		assertEquals(verifyMerkle(tree, "hello", "abc-2120105", "xyz-50318"), tree.getRootMerkleHashAsString());
+	}
+
+	@Test
+	void insertLeafsWithSharedPath2() {
+		var tree = new SparseMerkleTree(SparseMerkleTreeTest::hash24bits);
+		// H("hello") = 9595c 9
+		tree.update("hello".getBytes());
+		tree.print();
+		// H("abc-2120105") = 9595c 5
+		tree.update("abc-2120105".getBytes());
+		tree.print();
+		// H("hi-5515") = 959 df6
+		tree.update("hi-5515".getBytes());
+		tree.print();
+		FullNode root = (FullNode) tree.getRootNode();
+		assertNotNull(root.getChild(9));
+		assertEquals(verifyMerkle(tree, "hello", "abc-2120105", "hi-5515"), tree.getRootMerkleHashAsString());
 	}
 
 	@Test
@@ -123,7 +162,7 @@ public class SparseMerkleTreeTest {
 		// H("duplicate-20495739") = 9595c9
 		tree.update("duplicate-20495739".getBytes());
 		tree.print();
-		FullNode root = tree.getRootNode();
+		FullNode root = (FullNode) tree.getRootNode();
 		assertNotNull(root.getChild(9));
 		assertEquals(verifyMerkle(tree, "hello"), tree.getRootMerkleHashAsString());
 	}
@@ -133,7 +172,7 @@ public class SparseMerkleTreeTest {
 		var smt = new SparseMerkleTree(SparseMerkleTreeTest::hash24bits);
 		smt.update("world".getBytes());
 		smt.print();
-		FullNode root = smt.getRootNode();
+		FullNode root = (FullNode) smt.getRootNode();
 		assertNotNull(root.getChild(6));
 	}
 

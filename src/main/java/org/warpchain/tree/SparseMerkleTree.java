@@ -16,7 +16,7 @@ public class SparseMerkleTree implements TreeInfo {
 	private final Function<byte[], byte[]> hashFunction;
 	private final int treeHeight;
 	private final byte[][] DEFAULT_HASH_AT_HEIGHT;
-	private final FullNode root;
+	private Node root;
 
 	/**
 	 * Default sparse merkle tree using DSHA-256 as hash function.
@@ -69,20 +69,24 @@ public class SparseMerkleTree implements TreeInfo {
 		return this.hashFunction.apply(data);
 	}
 
-	public FullNode getRootNode() {
+	public Node getRootNode() {
 		return this.root;
 	}
 
-	public void update(byte[] value) {
-		update(this.hashFunction.apply(value), value);
+	public void update(byte[] dataValue) {
+		update(this.hashFunction.apply(dataValue), dataValue);
 	}
 
-	public void update(byte[] hash, byte[] value) {
-		HalfByteString path = new HalfByteString(hash);
-		assert 4 * path.length() == this.treeHeight : "Invalid hash size: " + hash;
+	void update(byte[] dataHash, byte[] dataValue) {
+		HalfByteString path = new HalfByteString(dataHash);
+		update(path, dataHash, dataValue);
+	}
 
-		logger.info("update tree: path={}, data={}", path, new String(value, StandardCharsets.UTF_8));
-		this.root.update(this, path, hash, value);
+	void update(HalfByteString dataPath, byte[] dataHash, byte[] dataValue) {
+		assert 4 * dataPath.length() == this.treeHeight : "Invalid path size: " + dataPath;
+
+		logger.info("update tree: path={}, data={}", dataPath, new String(dataValue, StandardCharsets.UTF_8));
+		this.root = this.root.update(this, dataPath, dataHash, dataValue);
 	}
 
 	public byte[] getRootMerkleHash() {
