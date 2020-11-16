@@ -6,7 +6,7 @@ import java.util.Objects;
 /**
  * Immutable half-byte-string. Each element is in range of 0 ~ 0xf.
  */
-public final class HalfByteString {
+public final class NibbleString {
 
 	private static final int[] EMPTY_ARRAY = new int[0];
 	private static final String HEX_STRING = "0123456789abcdef";
@@ -17,13 +17,13 @@ public final class HalfByteString {
 	private final int count;
 	private int hash;
 
-	public static final HalfByteString EMPTY = new HalfByteString(EMPTY_ARRAY, 0, 0);
+	public static final NibbleString EMPTY = new NibbleString(EMPTY_ARRAY, 0, 0);
 
-	public HalfByteString() {
+	public NibbleString() {
 		this(EMPTY_ARRAY, 0, 0);
 	}
 
-	public HalfByteString(String hexString) {
+	public NibbleString(String hexString) {
 		if (hexString.isEmpty()) {
 			this.value = EMPTY_ARRAY;
 			this.offset = 0;
@@ -52,7 +52,7 @@ public final class HalfByteString {
 		}
 	}
 
-	public HalfByteString(byte[] original) {
+	public NibbleString(byte[] original) {
 		if (original.length == 0) {
 			this.value = EMPTY_ARRAY;
 			this.offset = 0;
@@ -72,22 +72,22 @@ public final class HalfByteString {
 		}
 	}
 
-	private HalfByteString(int[] original, int offset, int count) {
+	private NibbleString(int[] original, int offset, int count) {
 		this.value = original;
 		this.offset = offset;
 		this.count = count;
 	}
 
-	public HalfByteString substring(int beginIndex) {
+	public NibbleString substring(int beginIndex) {
 		return substring(beginIndex, this.count);
 	}
 
-	public HalfByteString substring(int beginIndex, int endIndex) {
+	public NibbleString substring(int beginIndex, int endIndex) {
 		if (beginIndex == 0 && endIndex == this.count) {
 			return this;
 		}
 		Objects.checkFromToIndex(beginIndex, endIndex, this.count);
-		return new HalfByteString(this.value, this.offset + beginIndex, endIndex - beginIndex);
+		return new NibbleString(this.value, this.offset + beginIndex, endIndex - beginIndex);
 	}
 
 	public int length() {
@@ -104,8 +104,8 @@ public final class HalfByteString {
 		if (this == o) {
 			return true;
 		}
-		if (o instanceof HalfByteString) {
-			HalfByteString bs = (HalfByteString) o;
+		if (o instanceof NibbleString) {
+			NibbleString bs = (NibbleString) o;
 			return Arrays.equals(this.value, this.offset, this.offset + this.count, bs.value, bs.offset,
 					bs.offset + bs.count);
 		}
@@ -151,7 +151,7 @@ public final class HalfByteString {
 	 *         argument is a prefix of the character sequence represented by this
 	 *         string; <code>false</code> otherwise.
 	 */
-	public boolean startsWith(HalfByteString prefix) {
+	public boolean startsWith(NibbleString prefix) {
 		return startsWith(prefix, 0);
 	}
 
@@ -165,7 +165,7 @@ public final class HalfByteString {
 	 *         argument is a prefix of the substring of this object starting at
 	 *         index <code>toffset</code>; <code>false</code> otherwise.
 	 */
-	public boolean startsWith(HalfByteString prefix, int toffset) {
+	public boolean startsWith(NibbleString prefix, int toffset) {
 		int ta[] = this.value;
 		int to = this.offset + toffset;
 		int pa[] = prefix.value;
@@ -187,7 +187,7 @@ public final class HalfByteString {
 	 * Get shared prefix as many as possible. Example: "1a2b3c" and "1a2f4d" share
 	 * "1a2".
 	 */
-	public static HalfByteString sharedPrefix(HalfByteString s1, HalfByteString s2) {
+	public static NibbleString sharedPrefix(NibbleString s1, NibbleString s2) {
 		int max = Math.min(s1.length(), s2.length());
 		if (max == 0) {
 			return EMPTY;

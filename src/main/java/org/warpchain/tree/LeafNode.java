@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.warpchain.core.HalfByteString;
+import org.warpchain.core.NibbleString;
 import org.warpchain.util.ByteUtils;
 
 public class LeafNode extends Node {
@@ -14,7 +14,7 @@ public class LeafNode extends Node {
 	/**
 	 * Full path from root to leaf node.
 	 */
-	private final HalfByteString path;
+	private final NibbleString path;
 
 	/**
 	 * start height of this node.
@@ -36,7 +36,7 @@ public class LeafNode extends Node {
 	 */
 	private final byte[] dataValue;
 
-	LeafNode(TreeInfo tree, int height, HalfByteString path, byte[] dataHash, byte[] dataValue) {
+	LeafNode(TreeInfo tree, int height, NibbleString path, byte[] dataHash, byte[] dataValue) {
 		assert height > 0 && height <= tree.getTreeHeight() && (height & 0x3) == 0
 				: "Invalid height for leaf node: " + height;
 		assert 8 * dataHash.length == tree.getTreeHeight() : "Invalid data hash: " + ByteUtils.toHexString(dataHash);
@@ -95,13 +95,13 @@ public class LeafNode extends Node {
 	}
 
 	@Override
-	public Node update(TreeInfo tree, HalfByteString dataPath, byte[] dataHash, byte[] dataValue) {
+	public Node update(TreeInfo tree, NibbleString dataPath, byte[] dataHash, byte[] dataValue) {
 		logger.info("update {}...", dataPath);
 		if (this.path.equals(dataPath)) {
 			logger.info("data not change for path {}", dataPath);
 			return this;
 		}
-		HalfByteString prefix = HalfByteString.sharedPrefix(this.path, dataPath);
+		NibbleString prefix = NibbleString.sharedPrefix(this.path, dataPath);
 		logger.info("shared prefix: {}", prefix);
 		final int parentHeight = this.height;
 		final int childHeight = (prefix.length() + 1) * 4;

@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.warpchain.core.HalfByteString;
+import org.warpchain.core.NibbleString;
 import org.warpchain.util.ByteUtils;
 import org.warpchain.util.HashUtils;
 
@@ -45,7 +45,7 @@ public class SparseMerkleTree implements TreeInfo {
 		logger.info("init tree: height = {}, root merkle hash = {}, leaf merkle hash = {}", this.treeHeight,
 				ByteUtils.toHexString(DEFAULT_HASH_AT_HEIGHT[0]),
 				ByteUtils.toHexString(DEFAULT_HASH_AT_HEIGHT[this.treeHeight]));
-		this.root = new FullNode(this, 0, HalfByteString.EMPTY);
+		this.root = new FullNode(this, 0, NibbleString.EMPTY);
 	}
 
 	@Override
@@ -78,11 +78,11 @@ public class SparseMerkleTree implements TreeInfo {
 	}
 
 	void update(byte[] dataHash, byte[] dataValue) {
-		HalfByteString path = new HalfByteString(dataHash);
+		NibbleString path = new NibbleString(dataHash);
 		update(path, dataHash, dataValue);
 	}
 
-	void update(HalfByteString dataPath, byte[] dataHash, byte[] dataValue) {
+	void update(NibbleString dataPath, byte[] dataHash, byte[] dataValue) {
 		assert 4 * dataPath.length() == this.treeHeight : "Invalid path size: " + dataPath;
 
 		logger.info("update tree: path={}, data={}", dataPath, new String(dataValue, StandardCharsets.UTF_8));

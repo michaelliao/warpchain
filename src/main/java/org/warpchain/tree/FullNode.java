@@ -2,7 +2,7 @@ package org.warpchain.tree;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.warpchain.core.HalfByteString;
+import org.warpchain.core.NibbleString;
 import org.warpchain.util.ByteUtils;
 
 public class FullNode extends Node {
@@ -12,7 +12,7 @@ public class FullNode extends Node {
 	/**
 	 * Path from root to current node.
 	 */
-	private final HalfByteString path;
+	private final NibbleString path;
 
 	/**
 	 * Height of this node.
@@ -29,7 +29,7 @@ public class FullNode extends Node {
 	 */
 	private Node[] children;
 
-	FullNode(TreeInfo tree, int height, HalfByteString path) {
+	FullNode(TreeInfo tree, int height, NibbleString path) {
 		assert height >= 0 && height < tree.getTreeHeight() && (height & 0x3) == 0
 				: "invalid height for full node: " + height;
 		assert path.length() <= (height << 2) : "invalid path length for full node: " + path;
@@ -46,8 +46,8 @@ public class FullNode extends Node {
 	}
 
 	@Override
-	public Node update(TreeInfo tree, HalfByteString dataPath, byte[] dataHash, byte[] dataValue) {
-		HalfByteString prefix = HalfByteString.sharedPrefix(this.path, dataPath);
+	public Node update(TreeInfo tree, NibbleString dataPath, byte[] dataHash, byte[] dataValue) {
+		NibbleString prefix = NibbleString.sharedPrefix(this.path, dataPath);
 		logger.info("shared path prefix: {}", prefix);
 		if (prefix.length() == this.path.length()) {
 			logger.info("updated data path has same prefix for current path, just update child node.");

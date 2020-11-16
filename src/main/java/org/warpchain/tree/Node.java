@@ -1,6 +1,6 @@
 package org.warpchain.tree;
 
-import org.warpchain.core.HalfByteString;
+import org.warpchain.core.NibbleString;
 
 public abstract class Node {
 
@@ -8,7 +8,7 @@ public abstract class Node {
 
 	public abstract byte[] getMerkleHash();
 
-	public abstract Node update(TreeInfo tree, HalfByteString dataPath, byte[] dataHash, byte[] dataValue);
+	public abstract Node update(TreeInfo tree, NibbleString dataPath, byte[] dataHash, byte[] dataValue);
 
 	protected static final String INDENT = " ";
 

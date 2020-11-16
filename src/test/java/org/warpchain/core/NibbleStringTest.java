@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class HalfByteStringTest {
+public class NibbleStringTest {
 
 	byte[] data16Bytes;
 	byte[] data32Bytes;
@@ -28,29 +28,29 @@ public class HalfByteStringTest {
 
 	@Test
 	void testToString() {
-		var hbs = new HalfByteString(data16Bytes);
+		var hbs = new NibbleString(data16Bytes);
 		assertEquals(32, hbs.length());
 		assertEquals("1600010210203c7f80819eabb1def5ff", hbs.toString());
 
 		String hex = "1600010210203c7f80819eabb1def5ff";
-		var s2 = new HalfByteString(hex);
+		var s2 = new NibbleString(hex);
 		assertEquals(hex, s2.toString());
 	}
 
 	@Test
 	void testInvalidHexString() {
 		assertThrows(IllegalArgumentException.class, () -> {
-			new HalfByteString("123");
+			new NibbleString("123");
 		});
 		assertThrows(IllegalArgumentException.class, () -> {
-			new HalfByteString("123s");
+			new NibbleString("123s");
 		});
 	}
 
 	@Test
 	void testHashCode() {
-		var s32 = new HalfByteString(data16Bytes);
-		var s64 = new HalfByteString(data32Bytes);
+		var s32 = new NibbleString(data16Bytes);
+		var s64 = new NibbleString(data32Bytes);
 		var sub32 = s64.substring(16, 48);
 		assertEquals(1663895323, s32.hashCode());
 		assertEquals(1663895323, sub32.hashCode());
@@ -58,7 +58,7 @@ public class HalfByteStringTest {
 
 	@Test
 	void testEmptyByte() {
-		var empty = new HalfByteString();
+		var empty = new NibbleString();
 		assertEquals(0, empty.length());
 		assertEquals(0, empty.hashCode());
 		assertEquals("", empty.toString());
@@ -69,9 +69,9 @@ public class HalfByteStringTest {
 		byte[] b1 = new byte[] { 0x12, 0x34, 0x56, 0x78 };
 		byte[] b2 = new byte[] { 0x12, 0x34, 0x56 };
 		byte[] b3 = new byte[] { 0x34, 0x56 };
-		var s1 = new HalfByteString(b1);
-		var s2 = new HalfByteString(b2);
-		var s3 = new HalfByteString(b3);
+		var s1 = new NibbleString(b1);
+		var s2 = new NibbleString(b2);
+		var s3 = new NibbleString(b3);
 		assertTrue(s1.startsWith(s2));
 		assertFalse(s1.startsWith(s3));
 		assertTrue(s1.startsWith(s3, 2));
@@ -79,7 +79,7 @@ public class HalfByteStringTest {
 		assertTrue(s2.startsWith(s1.substring(0, 6)));
 		assertTrue(s2.startsWith(s2));
 		// test empty:
-		var s0 = new HalfByteString(new byte[0]);
+		var s0 = new NibbleString(new byte[0]);
 		assertTrue(s2.startsWith(s0));
 		assertTrue(s0.startsWith(s0));
 	}
@@ -89,20 +89,20 @@ public class HalfByteStringTest {
 		byte[] b1 = new byte[] { 0x12, 0x34, 0x56, 0x78 };
 		byte[] b2 = new byte[] { 0x12, 0x3f, 0x56 };
 		byte[] b3 = new byte[] { 0x34, 0x56 };
-		var s1 = new HalfByteString(b1);
-		var s2 = new HalfByteString(b2);
-		var s3 = new HalfByteString(b3);
-		assertEquals(s1.substring(0, 3), HalfByteString.sharedPrefix(s1, s2));
-		assertEquals(HalfByteString.EMPTY, HalfByteString.sharedPrefix(s1, s3));
-		assertEquals(HalfByteString.EMPTY, HalfByteString.sharedPrefix(s1, HalfByteString.EMPTY));
-		assertEquals(HalfByteString.EMPTY, HalfByteString.sharedPrefix(HalfByteString.EMPTY, HalfByteString.EMPTY));
-		assertEquals(s1, HalfByteString.sharedPrefix(s1, s1));
+		var s1 = new NibbleString(b1);
+		var s2 = new NibbleString(b2);
+		var s3 = new NibbleString(b3);
+		assertEquals(s1.substring(0, 3), NibbleString.sharedPrefix(s1, s2));
+		assertEquals(NibbleString.EMPTY, NibbleString.sharedPrefix(s1, s3));
+		assertEquals(NibbleString.EMPTY, NibbleString.sharedPrefix(s1, NibbleString.EMPTY));
+		assertEquals(NibbleString.EMPTY, NibbleString.sharedPrefix(NibbleString.EMPTY, NibbleString.EMPTY));
+		assertEquals(s1, NibbleString.sharedPrefix(s1, s1));
 	}
 
 	@Test
 	void testSubstring() {
-		var s32 = new HalfByteString(data16Bytes);
-		var s64 = new HalfByteString(data32Bytes);
+		var s32 = new NibbleString(data16Bytes);
+		var s64 = new NibbleString(data32Bytes);
 		var sub32 = s64.substring(16, 48);
 		assertEquals("1600010210203c7f80819eabb1def5ff", sub32.toString());
 		assertEquals(sub32, s32);
@@ -113,8 +113,8 @@ public class HalfByteStringTest {
 
 	@Test
 	void testValueAt() {
-		var s32 = new HalfByteString(data16Bytes);
-		var s64 = new HalfByteString(data32Bytes);
+		var s32 = new NibbleString(data16Bytes);
+		var s64 = new NibbleString(data32Bytes);
 		var sub32 = s64.substring(16, 48);
 		assertEquals(0x1, s32.valueAt(0));
 		assertEquals(0x1, sub32.valueAt(0));
@@ -135,8 +135,8 @@ public class HalfByteStringTest {
 
 	@Test
 	void testEquals() {
-		var s32 = new HalfByteString(data16Bytes);
-		var s64 = new HalfByteString(data32Bytes);
+		var s32 = new NibbleString(data16Bytes);
+		var s64 = new NibbleString(data32Bytes);
 		var sub32 = s64.substring(16, 48);
 		assertEquals(s32, sub32);
 	}
