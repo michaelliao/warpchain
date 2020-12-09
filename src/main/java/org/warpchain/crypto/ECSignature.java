@@ -8,6 +8,11 @@ import java.math.BigInteger;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.DERSequenceGenerator;
 
+/**
+ * EC signature with raw r and s.
+ * 
+ * @author liaoxuefeng
+ */
 public final class ECSignature {
 
 	public final BigInteger r;
@@ -33,5 +38,10 @@ public final class ECSignature {
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
+	}
+
+	@Override
+	public String toString() {
+		return String.format("{ECSignature: r=%x, s=%x}", r, s);
 	}
 }

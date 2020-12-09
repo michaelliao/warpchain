@@ -5,6 +5,8 @@ import java.util.Objects;
 
 /**
  * Immutable half-byte-string. Each element is in range of 0 ~ 0xf.
+ * 
+ * @author liaoxuefeng
  */
 public final class NibbleString {
 

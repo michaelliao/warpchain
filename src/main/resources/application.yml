@@ -1,0 +1,5 @@
+# warpchain configuration
+
+chain:
+  genesis-block:
+    data: ""
